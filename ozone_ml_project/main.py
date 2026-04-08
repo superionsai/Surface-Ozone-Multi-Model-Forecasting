@@ -9,6 +9,7 @@ from src.training.train_xgb import (
     evaluate_model,
     time_series_cv
 )
+import shap
 
 def main():
 
@@ -24,6 +25,27 @@ def main():
     df["month"] = df.index.month
     df["day_of_year"] = df.index.dayofyear
 
+    # -------------------------------
+    # PHASE 7 FEATURES (RESIDUAL-DRIVEN)
+    # -------------------------------
+
+    # Volatility (captures spikes)
+    df["O3_volatility"] = df["Ozone (µg/m³)"].rolling(3).std()
+
+    # Change in NOx (captures sudden emissions)
+    df["NOx_change"] = df["NOx (ppb)"].diff()
+
+    # Interaction term (nonlinear chemistry)
+    df["NO2_O3_interaction"] = df["NO2 (µg/m³)"] * df["Ozone (µg/m³)"]
+
+    # # Rolling mean (short-term smoothing)
+    # df["O3_roll3"] = df["Ozone (µg/m³)"].shift(1).rolling(3).mean()
+
+    # High pollution regime flag
+    df["high_NOx"] = (df["NOx (ppb)"] > df["NOx (ppb)"].quantile(0.75)).astype(int)
+
+    # Drop NaNs created by rolling/diff
+    df = df.dropna()
     # Split
     X_train, X_test, y_train, y_test = split_data(df, "Ozone (µg/m³)")
 
@@ -63,13 +85,20 @@ def main():
     plt.show()
 
     # Residuals
-    residuals = y_test.values - y_pred
+    # -------------------------------
+    # RESIDUAL ANALYSIS (IMPROVED)
+    # -------------------------------
+    residuals = y_test - y_pred
 
-    plt.figure(figsize=(12,4))
-    plt.plot(residuals)
-    plt.title("Residuals (Errors)")
-    plt.show()
-    
+    res_df = pd.DataFrame({
+        "Actual": y_test,
+        "Predicted": y_pred,
+        "Residual": residuals
+    })
+
+    print("\nTop Error Cases:")
+    print(res_df.reindex(residuals.abs().sort_values(ascending=False).index).head(10))
+        
     importance = pd.Series(model.feature_importances_, index=X_train.columns).sort_values(ascending=False)
     print("\nTop Features:\n", importance.head(10))
 
@@ -77,6 +106,18 @@ def main():
     plt.title("Top Feature Importance")
     plt.show()
 
+    # -------------------------------
+    # SHAP ANALYSIS
+    # -------------------------------
+    print("\nRunning SHAP analysis...")
+
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(X_test)
+
+    # Summary plot
+    shap.summary_plot(shap_values, X_test)
+    shap.dependence_plot("NO2_O3_interaction", shap_values, X_test)
+    shap.dependence_plot("Leighton_ratio", shap_values, X_test)
 
 if __name__ == "__main__":
     main()
