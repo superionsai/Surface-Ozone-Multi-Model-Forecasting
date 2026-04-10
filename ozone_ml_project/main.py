@@ -10,6 +10,8 @@ from src.training.train_xgb import (
     time_series_cv
 )
 import shap
+import numpy as np
+from src.models.lstm_model import train_lstm, evaluate_lstm
 
 def main():
 
@@ -27,19 +29,17 @@ def main():
 
     # -------------------------------
     # PHASE 7 FEATURES (RESIDUAL-DRIVEN)
-    # -------------------------------
-
+    # # -------------------------------
+    # df.drop(columns=["O3_lag1"], inplace=True)
     # Volatility (captures spikes)
     df["O3_volatility"] = df["Ozone (µg/m³)"].rolling(3).std()
 
     # Change in NOx (captures sudden emissions)
     df["NOx_change"] = df["NOx (ppb)"].diff()
 
-    # Interaction term (nonlinear chemistry)
-    df["NO2_O3_interaction"] = df["NO2 (µg/m³)"] * df["Ozone (µg/m³)"]
 
-    # # Rolling mean (short-term smoothing)
-    # df["O3_roll3"] = df["Ozone (µg/m³)"].shift(1).rolling(3).mean()
+    # Rolling mean (short-term smoothing)
+    df["O3_roll3"] = df["Ozone (µg/m³)"].shift(1).rolling(3).mean()
 
     # High pollution regime flag
     df["high_NOx"] = (df["NOx (ppb)"] > df["NOx (ppb)"].quantile(0.75)).astype(int)
@@ -116,8 +116,67 @@ def main():
 
     # Summary plot
     shap.summary_plot(shap_values, X_test)
-    shap.dependence_plot("NO2_O3_interaction", shap_values, X_test)
     shap.dependence_plot("Leighton_ratio", shap_values, X_test)
+
+    print("\nRunning LSTM model...")
+
+    lstm_model, scaler, X_test_lstm, y_test_lstm = train_lstm(df)
+
+    preds_lstm, actual_lstm, mae_lstm, r2_lstm = evaluate_lstm(
+        lstm_model, scaler, X_test_lstm, y_test_lstm
+    )
+
+    print("\n--- LSTM PERFORMANCE ---")
+    print(f"LSTM MAE: {mae_lstm:.4f}")
+    print(f"LSTM R2: {r2_lstm:.4f}")
+
+
+    # -------------------------------
+    # LSTM PREDICTION PLOT
+    # -------------------------------
+    plt.figure(figsize=(12, 5))
+    plt.plot(actual_lstm, label="Actual")
+    plt.plot(preds_lstm, label="LSTM Predicted")
+    plt.title("LSTM Ozone Prediction")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+
+    # -------------------------------
+    # LSTM RESIDUAL ANALYSIS
+    # -------------------------------
+    lstm_residuals = actual_lstm - preds_lstm
+
+    plt.figure(figsize=(12, 4))
+    plt.plot(lstm_residuals)
+    plt.title("LSTM Residuals Over Time")
+    plt.grid()
+    plt.show()
+
+
+    plt.figure(figsize=(6, 4))
+    plt.hist(lstm_residuals, bins=30)
+    plt.title("LSTM Residual Distribution")
+    plt.grid()
+    plt.show()
+
+
+    # -------------------------------
+    # TOP ERROR CASES (LSTM)
+    # -------------------------------
+    lstm_res_df = pd.DataFrame({
+        "Actual": actual_lstm,
+        "Predicted": preds_lstm,
+        "Residual": lstm_residuals
+    })
+
+    print("\nTop LSTM Error Cases:")
+    print(
+        lstm_res_df.iloc[
+            np.argsort(np.abs(lstm_residuals))[::-1]
+        ].head(10)
+    )
 
 if __name__ == "__main__":
     main()
