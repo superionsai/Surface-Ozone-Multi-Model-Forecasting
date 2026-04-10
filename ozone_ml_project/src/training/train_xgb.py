@@ -33,7 +33,7 @@ def train_xgb(X_train, y_train):
         colsample_bytree=0.9,
         gamma=0.1,
         reg_alpha=0.1,
-        reg_lambda=1,
+        reg_lambda=3,
         random_state=42
     )
 
