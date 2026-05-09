@@ -1,0 +1,108 @@
+================================================================================
+EXHAUSTIVE RESEARCH EVALUATION REPORT
+Model Architecture : LSTM
+Target Station     : PUNJABIBAGH
+Total Test Samples : 8760
+================================================================================
+
+1. EXECUTIVE SUMMARY & GLOBAL METRICS
+----------------------------------------
+The LSTM model was evaluated using a Hybrid Research Split:
+- Train: 65% of total data (Randomly sampled from first 5 years).
+- Val  : Remainder of first 5 years (Randomly sampled).
+- Test : Final 1 year of data (Strict Chronological).
+This strategy ensures the model learns all seasonal chemistry while strictly testing on unseen future data.
+
+Metric                         | Train (65%)  | Val (~18%)   | Test (1 Yr) 
+---------------------------------------------------------------------------
+MSE                            | 55.1621      | 106.5360     | 731.7664    
+RMSE                           | 7.4271       | 10.3216      | 27.0512     
+MAE                            | 4.6931       | 6.1146       | 19.5611     
+R2                             | 0.9277       | 0.8622       | 0.3722      
+
+Analysis of Base Metrics:
+The R² score is critically low. The architecture struggles to separate the ozone signal from background meteorological noise, indicating potential underfitting or lack of representational capacity in the current feature space.
+
+2. ADVANCED SCIENTIFIC STATISTICS
+----------------------------------------
+  * Index of Agreement (IA)        : 0.7898 (Scale: 0 to 1)
+  * Normalized Mean Bias (NMB)     : 5.7755%
+  * Normalized Mean Error (NME)    : 58.6795%
+  * Percent Bias (PBIAS)           : 5.7755%
+  * Factor of 2 Accuracy (FAC2)    : 0.5050 (Ideal: > 0.5)
+  * Peak RMSE (Top 10% obs.)       : 50.9558 µg/m³
+
+Diagnostic Interpretation:
+The Percent Bias (PBIAS) is within optimal ranges (< |10%|), suggesting the model predictions are evenly distributed across the regression plane without systematic over/underestimation.
+The FAC2 metric shows that 50.5% of all predictions fall within a strict factor of 2 of the observed values. In urban air quality forecasting, a FAC2 > 0.5 is required for operational viability.
+
+3. DIURNAL DYNAMICS & PHOTOCHEMICAL CYCLE
+----------------------------------------
+Ground-level ozone exhibits a distinct diurnal cycle governed by solar radiation (driving photolysis of NO2) and nighttime titration (via NO emission).
+  * Daytime RMSE (08:00 - 18:00)   : 31.4872 µg/m³
+  * Nighttime RMSE (19:00 - 07:00) : 22.6283 µg/m³
+  * Most Accurate Hour             : 15:00 (Mean Absolute Error: 0.1661)
+  * Least Accurate Hour            : 01:00 (Mean Absolute Error: 7.1494)
+
+Diurnal Phase Analysis:
+Error magnitude is relatively consistent across the diurnal cycle, suggesting the architecture balances both daytime production and nighttime destruction dynamics symmetrically.
+Observed peak ozone occurs on average at 13:00, while the model predicts the peak at 14:00.
+-> WARNING: A phase lag of 1 hours is detected in the diurnal peak.
+
+4. SEASONAL DISTRIBUTION & GENERALIZATION
+----------------------------------------
+Evaluating generalization across the distinct meteorological regimes of the Indian subcontinent.
+  * Monsoon         - RMSE: 18.9489 | MAE: 13.3323 | Mean Conc: 16.5143
+  * Post-Monsoon    - RMSE: 22.3203 | MAE: 16.6167 | Mean Conc: 31.8903
+  * Summer          - RMSE: 31.8646 | MAE: 24.9863 | Mean Conc: 47.1784
+  * Winter          - RMSE: 29.7766 | MAE: 20.5701 | Mean Conc: 32.7455
+
+Seasonal Discrepancy Analysis:
+The highest error regime is identified as Summer, whereas the model performs optimally during Monsoon.
+Summer maximum errors indicate the model cannot properly scale with extreme temperature-driven biogenic VOC emissions and accelerated NO2 photolysis rates.
+
+5. EXTREME EVENT PREDICTION & AQI BOUNDARIES
+----------------------------------------
+Regulatory and health-advisory models are judged primarily on their ability to predict extreme pollution events (AQI 'Poor' and above, >200 µg/m³).
+  * No significant extreme events (>200 µg/m³) were present in the target holdout subset to evaluate tail-end robustness.
+
+6. VARIANCE & STRUCTURAL INTEGRITY
+----------------------------------------
+Comparing the standard deviation (spread) of the predicted signal versus the true signal.
+  * Standard Deviation (Observed)  : 34.1435
+  * Standard Deviation (Predicted) : 28.2635
+  * Variance Ratio (Pred/Obs)      : 0.8278
+
+The variance ratio is near optimal (~1.0). The model successfully replicates the structural volatility and dynamic range of the true atmospheric sequence.
+
+7. EMPIRICAL ATMOSPHERIC OBSERVATIONS (RAW DATA)
+----------------------------------------
+Exploratory analysis of the true observational dataset prior to ML application.
+  * Highest Mean Ozone Month       : 05 (67.87 µg/m³)
+  * Lowest Mean Ozone Month        : 08 (10.47 µg/m³)
+  * Total Hazardous Hours (>200)   : 0
+-> The evaluation set represents a relatively clean temporal slice with no Severe category occurrences.
+
+8. PHENOMENOLOGICAL ATMOSPHERIC ANALYSIS
+----------------------------------------
+Analyzing the physical behaviors and non-linear interactions of the local atmosphere.
+A. Ozone Weekend Effect (OWE):
+   Observed -> Weekday Mean: 33.04 | Weekend Mean: 34.07
+   Modeled  -> Weekday Mean: 35.10 | Weekend Mean: 35.66
+   -> OWE Detected: The raw data shows higher ozone on weekends (typically due to lower NOx emissions reducing titration).
+   -> Model Success: The model successfully learned the non-linear Weekend Effect.
+
+B. Photochemical Ascent & Nighttime Titration Rates:
+   Morning Ascent Rate (08:00-12:00) : Observed = +10.08 µg/m³/hr | Modeled = +8.53 µg/m³/hr
+   Evening Titration Rate (18:00-22:00): Observed = -5.19 µg/m³/hr | Modeled = -3.44 µg/m³/hr
+   -> Warning: The modeled nighttime collapse rate deviates significantly, suggesting poor mapping of NO scavenging.
+
+C. Peak Duration & Multiday Stagnation:
+   Average consecutive hours > 100 µg/m³ : Observed = 5.0 hours | Modeled = 4.2 hours
+   -> The model successfully captures the temporal duration and persistence of hazardous events.
+
+9. FINAL DIAGNOSTIC CONCLUSION
+----------------------------------------
+The LSTM architecture shows baseline competence at punjabibagh but exhibits specific analytical flaws detailed above (e.g., peak suppression, phase lagging, or seasonal bias). Targeted ensembling or residual boosting is recommended to correct these isolated domain failures.
+================================================================================
+END OF REPORT

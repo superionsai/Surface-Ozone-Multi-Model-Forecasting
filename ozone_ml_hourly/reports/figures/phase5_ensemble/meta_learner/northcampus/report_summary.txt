@@ -1,0 +1,106 @@
+================================================================================
+EXHAUSTIVE RESEARCH EVALUATION REPORT
+Model Architecture : META_LEARNER
+Target Station     : NORTHCAMPUS
+Total Test Samples : 10498
+================================================================================
+
+1. EXECUTIVE SUMMARY & GLOBAL METRICS
+----------------------------------------
+The META_LEARNER model was evaluated using a strict chronological split (65% Train, 15% Val, 20% Test) with a 24h buffer.
+This evaluation rigorously tests the model's ability to generalize atmospheric physics without memorizing sequential temporal proximity.
+
+Metric                         | Train (65%)  | Val (15%)    | Test (20%)  
+---------------------------------------------------------------------------
+MSE                            | nan          | nan          | 441.1570    
+RMSE                           | nan          | nan          | 21.0037     
+MAE                            | nan          | nan          | 17.3243     
+R2                             | nan          | nan          | 0.3604      
+
+Analysis of Base Metrics:
+The R² score is critically low. The architecture struggles to separate the ozone signal from background meteorological noise, indicating potential underfitting or lack of representational capacity in the current feature space.
+
+2. ADVANCED SCIENTIFIC STATISTICS
+----------------------------------------
+  * Index of Agreement (IA)        : 0.6414 (Scale: 0 to 1)
+  * Normalized Mean Bias (NMB)     : -10.1334%
+  * Normalized Mean Error (NME)    : 52.9489%
+  * Percent Bias (PBIAS)           : -10.1334%
+  * Factor of 2 Accuracy (FAC2)    : 0.6130 (Ideal: > 0.5)
+  * Peak RMSE (Top 10% obs.)       : 36.7028 µg/m³
+
+Diagnostic Interpretation:
+The Percent Bias (PBIAS) reveals a systemic negative bias. The model is underestimating ozone formation, potentially missing the magnitude of peak afternoon photochemical production driven by high VOC/NOx ratios.
+The FAC2 metric shows that 61.3% of all predictions fall within a strict factor of 2 of the observed values. In urban air quality forecasting, a FAC2 > 0.5 is required for operational viability.
+
+3. DIURNAL DYNAMICS & PHOTOCHEMICAL CYCLE
+----------------------------------------
+Ground-level ozone exhibits a distinct diurnal cycle governed by solar radiation (driving photolysis of NO2) and nighttime titration (via NO emission).
+  * Daytime RMSE (08:00 - 18:00)   : 25.6091 µg/m³
+  * Nighttime RMSE (19:00 - 07:00) : 16.1085 µg/m³
+  * Most Accurate Hour             : 19:00 (Mean Absolute Error: 0.9372)
+  * Least Accurate Hour            : 14:00 (Mean Absolute Error: 23.9246)
+
+Diurnal Phase Analysis:
+The model exhibits significantly higher error during daylight hours. This points to a deficiency in modeling the complex, radiation-dependent photochemical generation rate. The model likely underestimates the rapid escalation of ozone during peak solar irradiance.
+Observed peak ozone occurs on average at 15:00, while the model predicts the peak at 15:00.
+-> Phase alignment is perfect. The model correctly identifies the timing of maximum daily photochemical activity.
+
+4. SEASONAL DISTRIBUTION & GENERALIZATION
+----------------------------------------
+Evaluating generalization across the distinct meteorological regimes of the Indian subcontinent.
+  * Monsoon         - RMSE: 19.3699 | MAE: 15.5931 | Mean Conc: 27.3720
+  * Post-Monsoon    - RMSE: 20.3644 | MAE: 16.6789 | Mean Conc: 35.7597
+  * Summer          - RMSE: 24.2109 | MAE: 20.8207 | Mean Conc: 38.2278
+  * Winter          - RMSE: 19.1699 | MAE: 15.6615 | Mean Conc: 28.6562
+
+Seasonal Discrepancy Analysis:
+The highest error regime is identified as Summer, whereas the model performs optimally during Winter.
+Summer maximum errors indicate the model cannot properly scale with extreme temperature-driven biogenic VOC emissions and accelerated NO2 photolysis rates.
+
+5. EXTREME EVENT PREDICTION & AQI BOUNDARIES
+----------------------------------------
+Regulatory and health-advisory models are judged primarily on their ability to predict extreme pollution events (AQI 'Poor' and above, >200 µg/m³).
+  * No significant extreme events (>200 µg/m³) were present in the target holdout subset to evaluate tail-end robustness.
+
+6. VARIANCE & STRUCTURAL INTEGRITY
+----------------------------------------
+Comparing the standard deviation (spread) of the predicted signal versus the true signal.
+  * Standard Deviation (Observed)  : 26.2639
+  * Standard Deviation (Predicted) : 9.5368
+  * Variance Ratio (Pred/Obs)      : 0.3631
+
+The predicted variance is heavily suppressed compared to reality (Ratio < 0.7). The model geometry is too rigid, failing to replicate the natural atmospheric volatility.
+
+7. EMPIRICAL ATMOSPHERIC OBSERVATIONS (RAW DATA)
+----------------------------------------
+Exploratory analysis of the true observational dataset prior to ML application.
+  * Highest Mean Ozone Month       : 04 (47.29 µg/m³)
+  * Lowest Mean Ozone Month        : 07 (23.61 µg/m³)
+  * Total Hazardous Hours (>200)   : 0
+-> The evaluation set represents a relatively clean temporal slice with no Severe category occurrences.
+
+8. PHENOMENOLOGICAL ATMOSPHERIC ANALYSIS
+----------------------------------------
+Analyzing the physical behaviors and non-linear interactions of the local atmosphere.
+A. Ozone Weekend Effect (OWE):
+   Observed -> Weekday Mean: 32.56 | Weekend Mean: 33.12
+   Modeled  -> Weekday Mean: 29.45 | Weekend Mean: 29.30
+   -> OWE Detected: The raw data shows higher ozone on weekends (typically due to lower NOx emissions reducing titration).
+   -> Model Failure: The model failed to replicate the Weekend Effect, predicting lower/equal ozone on weekends.
+
+B. Photochemical Ascent & Nighttime Titration Rates:
+   Morning Ascent Rate (08:00-12:00) : Observed = +9.43 µg/m³/hr | Modeled = +1.86 µg/m³/hr
+   Evening Titration Rate (18:00-22:00): Observed = -3.94 µg/m³/hr | Modeled = -1.60 µg/m³/hr
+   -> Warning: The modeled morning production rate deviates significantly (>30%) from reality, suggesting flawed photolysis mapping.
+   -> Warning: The modeled nighttime collapse rate deviates significantly, suggesting poor mapping of NO scavenging.
+
+C. Peak Duration & Multiday Stagnation:
+   Average consecutive hours > 100 µg/m³ : Observed = 0.0 hours | Modeled = 0.0 hours
+   -> The model successfully captures the temporal duration and persistence of hazardous events.
+
+9. FINAL DIAGNOSTIC CONCLUSION
+----------------------------------------
+The META_LEARNER architecture shows baseline competence at northcampus but exhibits specific analytical flaws detailed above (e.g., peak suppression, phase lagging, or seasonal bias). Targeted ensembling or residual boosting is recommended to correct these isolated domain failures.
+================================================================================
+END OF REPORT

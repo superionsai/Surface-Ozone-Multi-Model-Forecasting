@@ -1,0 +1,107 @@
+================================================================================
+EXHAUSTIVE RESEARCH EVALUATION REPORT
+Model Architecture : XGB
+Target Station     : RKPURAM
+Total Test Samples : 8760
+================================================================================
+
+1. EXECUTIVE SUMMARY & GLOBAL METRICS
+----------------------------------------
+The XGB model was evaluated using a Hybrid Research Split:
+- Train: 65% of total data (Randomly sampled from first 5 years).
+- Val  : Remainder of first 5 years (Randomly sampled).
+- Test : Final 1 year of data (Strict Chronological).
+This strategy ensures the model learns all seasonal chemistry while strictly testing on unseen future data.
+
+Metric                         | Train (65%)  | Val (~18%)   | Test (1 Yr) 
+---------------------------------------------------------------------------
+MSE                            | 4.3844       | 153.0750     | 443.8797    
+RMSE                           | 2.0939       | 12.3723      | 21.0685     
+MAE                            | 1.0633       | 7.5326       | 15.1737     
+R2                             | 0.9972       | 0.9010       | 0.4856      
+
+Analysis of Base Metrics:
+The R² score is critically low. The architecture struggles to separate the ozone signal from background meteorological noise, indicating potential underfitting or lack of representational capacity in the current feature space.
+
+2. ADVANCED SCIENTIFIC STATISTICS
+----------------------------------------
+  * Index of Agreement (IA)        : 0.8475 (Scale: 0 to 1)
+  * Normalized Mean Bias (NMB)     : 9.5700%
+  * Normalized Mean Error (NME)    : 48.1498%
+  * Percent Bias (PBIAS)           : 9.5700%
+  * Factor of 2 Accuracy (FAC2)    : 0.6308 (Ideal: > 0.5)
+  * Peak RMSE (Top 10% obs.)       : 30.5875 µg/m³
+
+Diagnostic Interpretation:
+The Percent Bias (PBIAS) is within optimal ranges (< |10%|), suggesting the model predictions are evenly distributed across the regression plane without systematic over/underestimation.
+The FAC2 metric shows that 63.1% of all predictions fall within a strict factor of 2 of the observed values. In urban air quality forecasting, a FAC2 > 0.5 is required for operational viability.
+
+3. DIURNAL DYNAMICS & PHOTOCHEMICAL CYCLE
+----------------------------------------
+Ground-level ozone exhibits a distinct diurnal cycle governed by solar radiation (driving photolysis of NO2) and nighttime titration (via NO emission).
+  * Daytime RMSE (08:00 - 18:00)   : 27.7150 µg/m³
+  * Nighttime RMSE (19:00 - 07:00) : 13.0200 µg/m³
+  * Most Accurate Hour             : 23:00 (Mean Absolute Error: 0.2643)
+  * Least Accurate Hour            : 11:00 (Mean Absolute Error: 8.7186)
+
+Diurnal Phase Analysis:
+The model exhibits significantly higher error during daylight hours. This points to a deficiency in modeling the complex, radiation-dependent photochemical generation rate. The model likely underestimates the rapid escalation of ozone during peak solar irradiance.
+Observed peak ozone occurs on average at 14:00, while the model predicts the peak at 15:00.
+-> WARNING: A phase lag of 1 hours is detected in the diurnal peak.
+
+4. SEASONAL DISTRIBUTION & GENERALIZATION
+----------------------------------------
+Evaluating generalization across the distinct meteorological regimes of the Indian subcontinent.
+  * Monsoon         - RMSE: 14.2680 | MAE: 10.8381 | Mean Conc: 33.4077
+  * Post-Monsoon    - RMSE: 21.0751 | MAE: 16.1184 | Mean Conc: 41.5274
+  * Summer          - RMSE: 26.3000 | MAE: 19.3858 | Mean Conc: 31.6150
+  * Winter          - RMSE: 18.7994 | MAE: 13.2556 | Mean Conc: 22.6523
+
+Seasonal Discrepancy Analysis:
+The highest error regime is identified as Summer, whereas the model performs optimally during Monsoon.
+Summer maximum errors indicate the model cannot properly scale with extreme temperature-driven biogenic VOC emissions and accelerated NO2 photolysis rates.
+
+5. EXTREME EVENT PREDICTION & AQI BOUNDARIES
+----------------------------------------
+Regulatory and health-advisory models are judged primarily on their ability to predict extreme pollution events (AQI 'Poor' and above, >200 µg/m³).
+  * No significant extreme events (>200 µg/m³) were present in the target holdout subset to evaluate tail-end robustness.
+
+6. VARIANCE & STRUCTURAL INTEGRITY
+----------------------------------------
+Comparing the standard deviation (spread) of the predicted signal versus the true signal.
+  * Standard Deviation (Observed)  : 29.3762
+  * Standard Deviation (Predicted) : 26.8593
+  * Variance Ratio (Pred/Obs)      : 0.9143
+
+The variance ratio is near optimal (~1.0). The model successfully replicates the structural volatility and dynamic range of the true atmospheric sequence.
+
+7. EMPIRICAL ATMOSPHERIC OBSERVATIONS (RAW DATA)
+----------------------------------------
+Exploratory analysis of the true observational dataset prior to ML application.
+  * Highest Mean Ozone Month       : 10 (43.27 µg/m³)
+  * Lowest Mean Ozone Month        : 01 (16.22 µg/m³)
+  * Total Hazardous Hours (>200)   : 0
+-> The evaluation set represents a relatively clean temporal slice with no Severe category occurrences.
+
+8. PHENOMENOLOGICAL ATMOSPHERIC ANALYSIS
+----------------------------------------
+Analyzing the physical behaviors and non-linear interactions of the local atmosphere.
+A. Ozone Weekend Effect (OWE):
+   Observed -> Weekday Mean: 31.31 | Weekend Mean: 32.03
+   Modeled  -> Weekday Mean: 34.30 | Weekend Mean: 35.10
+   -> OWE Detected: The raw data shows higher ozone on weekends (typically due to lower NOx emissions reducing titration).
+   -> Model Success: The model successfully learned the non-linear Weekend Effect.
+
+B. Photochemical Ascent & Nighttime Titration Rates:
+   Morning Ascent Rate (08:00-12:00) : Observed = +10.14 µg/m³/hr | Modeled = +10.96 µg/m³/hr
+   Evening Titration Rate (18:00-22:00): Observed = -3.37 µg/m³/hr | Modeled = -3.38 µg/m³/hr
+
+C. Peak Duration & Multiday Stagnation:
+   Average consecutive hours > 100 µg/m³ : Observed = 3.8 hours | Modeled = 2.4 hours
+   -> The model prematurely cuts off high-ozone events. It fails to capture the prolonged stagnation common in urban centers.
+
+9. FINAL DIAGNOSTIC CONCLUSION
+----------------------------------------
+The XGB architecture shows baseline competence at rkpuram but exhibits specific analytical flaws detailed above (e.g., peak suppression, phase lagging, or seasonal bias). Targeted ensembling or residual boosting is recommended to correct these isolated domain failures.
+================================================================================
+END OF REPORT

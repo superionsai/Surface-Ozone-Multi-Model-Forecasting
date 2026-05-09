@@ -1,0 +1,106 @@
+================================================================================
+EXHAUSTIVE RESEARCH EVALUATION REPORT
+Model Architecture : LSTM
+Target Station     : NARELA
+Total Test Samples : 8760
+================================================================================
+
+1. EXECUTIVE SUMMARY & GLOBAL METRICS
+----------------------------------------
+The LSTM model was evaluated using a Hybrid Research Split:
+- Train: 65% of total data (Randomly sampled from first 5 years).
+- Val  : Remainder of first 5 years (Randomly sampled).
+- Test : Final 1 year of data (Strict Chronological).
+This strategy ensures the model learns all seasonal chemistry while strictly testing on unseen future data.
+
+Metric                         | Train (65%)  | Val (~18%)   | Test (1 Yr) 
+---------------------------------------------------------------------------
+MSE                            | 40.7023      | 79.0227      | 500.2363    
+RMSE                           | 6.3798       | 8.8895       | 22.3660     
+MAE                            | 4.5087       | 5.9099       | 15.9752     
+R2                             | 0.9672       | 0.9364       | 0.5563      
+
+Analysis of Base Metrics:
+The R² score indicates moderate variance capture. While general trends are learned, stochastic localized events or missing unmeasured precursors may limit accuracy.
+
+2. ADVANCED SCIENTIFIC STATISTICS
+----------------------------------------
+  * Index of Agreement (IA)        : 0.8615 (Scale: 0 to 1)
+  * Normalized Mean Bias (NMB)     : -13.7250%
+  * Normalized Mean Error (NME)    : 47.6968%
+  * Percent Bias (PBIAS)           : -13.7250%
+  * Factor of 2 Accuracy (FAC2)    : 0.5030 (Ideal: > 0.5)
+  * Peak RMSE (Top 10% obs.)       : 45.1701 µg/m³
+
+Diagnostic Interpretation:
+The Percent Bias (PBIAS) reveals a systemic negative bias. The model is underestimating ozone formation, potentially missing the magnitude of peak afternoon photochemical production driven by high VOC/NOx ratios.
+The FAC2 metric shows that 50.3% of all predictions fall within a strict factor of 2 of the observed values. In urban air quality forecasting, a FAC2 > 0.5 is required for operational viability.
+
+3. DIURNAL DYNAMICS & PHOTOCHEMICAL CYCLE
+----------------------------------------
+Ground-level ozone exhibits a distinct diurnal cycle governed by solar radiation (driving photolysis of NO2) and nighttime titration (via NO emission).
+  * Daytime RMSE (08:00 - 18:00)   : 23.9383 µg/m³
+  * Nighttime RMSE (19:00 - 07:00) : 20.9436 µg/m³
+  * Most Accurate Hour             : 10:00 (Mean Absolute Error: 0.0856)
+  * Least Accurate Hour            : 18:00 (Mean Absolute Error: 11.5031)
+
+Diurnal Phase Analysis:
+Error magnitude is relatively consistent across the diurnal cycle, suggesting the architecture balances both daytime production and nighttime destruction dynamics symmetrically.
+Observed peak ozone occurs on average at 15:00, while the model predicts the peak at 14:00.
+-> WARNING: A phase lag of 1 hours is detected in the diurnal peak.
+
+4. SEASONAL DISTRIBUTION & GENERALIZATION
+----------------------------------------
+Evaluating generalization across the distinct meteorological regimes of the Indian subcontinent.
+  * Monsoon         - RMSE: 28.8059 | MAE: 22.0049 | Mean Conc: 38.3532
+  * Post-Monsoon    - RMSE: 21.9638 | MAE: 16.4012 | Mean Conc: 42.3702
+  * Summer          - RMSE: 23.6594 | MAE: 17.9312 | Mean Conc: 39.2218
+  * Winter          - RMSE:  9.7342 | MAE:  6.8712 | Mean Conc: 14.7430
+
+Seasonal Discrepancy Analysis:
+The highest error regime is identified as Monsoon, whereas the model performs optimally during Winter.
+Monsoon errors usually stem from abrupt wash-out events and sporadic cloud cover breaking the continuous radiation assumptions.
+
+5. EXTREME EVENT PREDICTION & AQI BOUNDARIES
+----------------------------------------
+Regulatory and health-advisory models are judged primarily on their ability to predict extreme pollution events (AQI 'Poor' and above, >200 µg/m³).
+  * No significant extreme events (>200 µg/m³) were present in the target holdout subset to evaluate tail-end robustness.
+
+6. VARIANCE & STRUCTURAL INTEGRITY
+----------------------------------------
+Comparing the standard deviation (spread) of the predicted signal versus the true signal.
+  * Standard Deviation (Observed)  : 33.5801
+  * Standard Deviation (Predicted) : 29.0589
+  * Variance Ratio (Pred/Obs)      : 0.8654
+
+The variance ratio is near optimal (~1.0). The model successfully replicates the structural volatility and dynamic range of the true atmospheric sequence.
+
+7. EMPIRICAL ATMOSPHERIC OBSERVATIONS (RAW DATA)
+----------------------------------------
+Exploratory analysis of the true observational dataset prior to ML application.
+  * Highest Mean Ozone Month       : 06 (76.16 µg/m³)
+  * Lowest Mean Ozone Month        : 01 (2.52 µg/m³)
+  * Total Hazardous Hours (>200)   : 0
+-> The evaluation set represents a relatively clean temporal slice with no Severe category occurrences.
+
+8. PHENOMENOLOGICAL ATMOSPHERIC ANALYSIS
+----------------------------------------
+Analyzing the physical behaviors and non-linear interactions of the local atmosphere.
+A. Ozone Weekend Effect (OWE):
+   Observed -> Weekday Mean: 33.50 | Weekend Mean: 33.48
+   Modeled  -> Weekday Mean: 29.05 | Weekend Mean: 28.50
+   -> No OWE Detected: Weekend ozone is lower or equal to weekday ozone in reality.
+
+B. Photochemical Ascent & Nighttime Titration Rates:
+   Morning Ascent Rate (08:00-12:00) : Observed = +7.43 µg/m³/hr | Modeled = +8.92 µg/m³/hr
+   Evening Titration Rate (18:00-22:00): Observed = -3.82 µg/m³/hr | Modeled = -2.83 µg/m³/hr
+
+C. Peak Duration & Multiday Stagnation:
+   Average consecutive hours > 100 µg/m³ : Observed = 5.3 hours | Modeled = 3.6 hours
+   -> The model successfully captures the temporal duration and persistence of hazardous events.
+
+9. FINAL DIAGNOSTIC CONCLUSION
+----------------------------------------
+The LSTM architecture shows baseline competence at narela but exhibits specific analytical flaws detailed above (e.g., peak suppression, phase lagging, or seasonal bias). Targeted ensembling or residual boosting is recommended to correct these isolated domain failures.
+================================================================================
+END OF REPORT
